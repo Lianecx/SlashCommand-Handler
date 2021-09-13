@@ -1,2 +1,6 @@
-# SlashCommand-Handler
- Easy SlashCommand-Handler for Discord Bots
+# Complete Bot Handler
+
+- Slash Command Handler
+- Fully functional Help command
+- Descriptions
+- Easy to use
