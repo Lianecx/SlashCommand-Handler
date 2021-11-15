@@ -28,26 +28,28 @@ const helpData = new SlashCommandBuilder()
         .setRequired(false)
     );
 
-//Still Help SlashCommandBuilder
-helpData.options[0].choices = [];
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    helpData.options[0].choices.push({ name: command.name, value: command.name });
-}
-
 //Push all SlashBuilders (in JSON) and permissions from all command files to array
 const commands = [];
 const permissions = [];
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commands.push(command.data.toJSON());
-	if(command.permissions) {
-        let perms = [];
-        for(const perm of command.permissions) {
-            if(roleIds[perm]) perms.push({ id: roleIds[perm], type: 1, permission: true });
-            else if(!isNaN(perm)) perms.push({ id: perm, type: 1, permission: true });
+helpData.options[0].choices = [];
+
+const commandFolders = fs.readdirSync('./commands/');
+for (const folder of commandFolders) {
+    const commandFiles = fs.readdirSync(`./commands/${folder}`);
+	//Delete the following line if you dont want the categorys included in the help command choices
+	helpData.options[0].choices.push({ name: folder, value: folder });
+    for (const file of commandFiles) {
+        const command = require(`./commands/${folder}/${file}`);
+        helpData.options[0].choices.push({ name: command.name, value: command.name });
+        commands.push(command.data.toJSON());
+        if(command.permissions) {
+            let perms = [];
+            for(const perm of command.permissions) {
+                if(roleIds[perm]) perms.push({ id: roleIds[perm], type: 1, permission: true });
+                else if(!isNaN(perm)) perms.push({ id: perm, type: 1, permission: true });
+            }
+            permissions.push({ name: command.name, perms: perms });
         }
-        permissions.push({ name: command.name, perms: perms });
     }
 }
 
@@ -80,7 +82,6 @@ const rest = new REST({ version: '9' }).setToken(token);
 				permissions: permissions.find(cmd => cmd.name === permission.name).perms,
 			});
 		}
-        console.log(fullPermissions)
 
         //Upload permissions to discord
         await rest.put(

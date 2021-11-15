@@ -20,13 +20,17 @@ const client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAG
 //Create client.commands Collection
 client.commands = new Discord.Collection();
 //Read ./commands and filter all nonJs files
-const commandFiles = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    //Require all commandFiles
-    const command = require(`./commands/${file}`);
-    //Set all commandFiles in ./commands in client.commands collection
-    client.commands.set(command.name, command);
+const commandFolders = fs.readdirSync('./commands');
+for(const folder of commandFolders) {
+    const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
+    for (const file of commandFiles) {
+        //Require all commandFiles
+        const command = require(`./commands/${folder}/${file}`);
+        //Set all commandFiles in ./commands in client.commands collection
+        client.commands.set(command.name, command);
+    }
 }
+
 
 client.once('ready', () => {
     console.log('Bot logged in as ' + client.user.tag + '\nBot on ' + client.guilds.cache.size + ' server.');
@@ -58,56 +62,63 @@ client.on('interactionCreate', async interaction => {
         if(option.value) args.push(option.value);
     });
 
-    //interaction.reply = interaction.editReply
-    interaction.reply = function (content) {
-        return interaction.editReply(content);
-    }
-    interaction.channel.send = function (content) {
-        if (typeof content !== 'string') interaction.editReply(content);
-        else interaction.editReply({ content: content, allowedMentions: { repliedUser: false } });
-    }
-
     //Help command
     if (interaction.commandName === 'help') {
         await interaction.deferReply();
 
+        const helpEmbed = new Discord.MessageEmbed()
+        .setTitle('Help Menu')
+        .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
+        .setColor('DARK_BUT_NOT_BLACK');
         if(!args[0]) {
-            console.log(interaction.user.tag + ' executed /help in ' + interaction.guild.name);
+            //You can adjust the fields for the categorys manually to your likings
+            helpEmbed.addField("Main", "Main Commands")
+            .addField("Moderation", "Moderation Commands")
+            //...
+            interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
 
-            const helpEmbed = new Discord.MessageEmbed()
-                .setTitle('Help Menu')
-                .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-                .setColor('DARK_BUT_NOT_BLACK');
-
-                client.commands.forEach(command => helpEmbed.addField(command.name.toUpperCase(), command.description, true));
-
-            interaction.reply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
+            //Or use the built-in embed (lame)
+            /*fs.readdir('./commands/', (err, cmds) => {
+                cmds = cmds.filter(cmd => cmd.endsWith('js'));
+                cmds.forEach(cmd => helpEmbed.addField(cmd, cmd + ' commands'));
+                interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
+            });*/
         } else {
-            console.log(`${interaction.user.tag} executed /help ${args[0]} in ${interaction.guild.name}`);
+            let command = client.commands.get(args[0]) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(args[0]));
+            if (!command) {
+                fs.readdir(`./commands/${args[0]}`, (err, commands) => {
+                    if(err) {
+                        console.log(interaction.member.user.tag + ' executed non-existent help command/category ' + args[0] + ' in ' + interaction.guild.id);
+                        interaction.editReply(':warning: That command/category [**' + args[0] + '**] doesnt exist.');
+                        return;
+                    }
 
-            const helpCommand = client.commands.get(args[0]);
-            if(!helpCommand) {
-                interaction.reply(`:warning: That command [**${args[0]}**] doesnt exist.`);
-                return;
+                    commands.forEach(commandFile => {
+                        commandFile = commandFile.split('.').shift();
+                        command = client.commands.get(commandFile.split('.').shift());
+                        helpEmbed.addField(command.name.toUpperCase(), command.description);
+                    });
+                    interaction.editReply({ embeds: [helpEmbed] });
+                });
+            } else {
+                //client.commands.forEach(command => helpEmbed.addField(command.name.toUpperCase(), command.description, true));
+
+                const helpEmbed = new Discord.MessageEmbed()
+                    .setTitle('Help Menu')
+                    .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
+                    .setColor('DARK_BUT_NOT_BLACK')
+                    .addField(command.name.toUpperCase(), command.description);
+                if(command.usage) helpEmbed.addField('\n**USAGE**', command.usage);
+                if(command.example) helpEmbed.addField('\n**EXAMPLE**', command.example);
+
+                interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
             }
-
-            const helpEmbed = new Discord.MessageEmbed()
-                .setTitle('Help Menu')
-                .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-                .setColor('DARK_BUT_NOT_BLACK')
-                .addField(helpCommand.name.toUpperCase(), helpCommand.description);
-            if(helpCommand.usage) helpEmbed.addField('\n**USAGE**', helpCommand.usage);
-            if(helpCommand.example) helpEmbed.addField('\n**EXAMPLE**', helpCommand.example);
-
-            interaction.reply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
         }
     } else {
 
         //Other Commands
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
-
-        await interaction.deferReply();
 
         command.execute(interaction, args);
     }

@@ -15,7 +15,7 @@ module.exports = {
     execute(interaction, args) {
         //interaction properties equal to message properties except message.mentions and message.attachments dont exist.
         //interaction.reply to answer commands.
-        //This to answer without ping => interaction.reply({ content: '', allowedMentions: { repliedUser: false } });
+        //This to reply without ping => interaction.reply({ content: 'some message', allowedMentions: { repliedUser: false } });
         interaction.reply('Pong!');
     }
 }
