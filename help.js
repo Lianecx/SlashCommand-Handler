@@ -3,7 +3,6 @@ const fs = require('fs');
 
 module.exports = {
     autocomplete(client, interaction) {
-        console.log('interaction')
         const focused = interaction.options.getFocused().toLowerCase();
 
         const commands = [];
@@ -22,7 +21,7 @@ module.exports = {
             }
         }
 
-        const matchingCommands = commands.filter(command => command.includes(focused));
+        const matchingCommands = commands.filter(command => command.toLowerCase().includes(focused));
         if(matchingCommands.length >= 25) matchingCommands.length = 25;
 
         matchingCommands.forEach(command => {
@@ -70,9 +69,10 @@ module.exports = {
                         return;
                     }
 
+                    commands = commands.filter(file => file.endsWith('.js'));
                     commands.forEach(commandFile => {
                         commandFile = commandFile.split('.').shift();
-                        command = client.commands.get(commandFile.split('.').shift());
+                        command = require(`./commands/${args[0]}/${commandFile}`);
                         helpEmbed.addField(command.name.toUpperCase(), command.description);
                     });
                     interaction.editReply({ embeds: [helpEmbed] });
