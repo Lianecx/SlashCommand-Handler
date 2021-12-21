@@ -26,21 +26,20 @@ const helpData = new SlashCommandBuilder()
         option.setName('command')
         .setDescription('Set the command of which you want to get information.')
         .setRequired(false)
-    );
+    ).toJSON();
 
 //Push all SlashBuilders (in JSON) and permissions from all command files to array
 const commands = [];
 const permissions = [];
-helpData.options[0].choices = [];
+
+helpData.options[0].autocomplete = true;
 
 const commandFolders = fs.readdirSync('./commands/');
 for (const folder of commandFolders) {
-    const commandFiles = fs.readdirSync(`./commands/${folder}`);
-	//Delete the following line if you dont want the categorys included in the help command choices
-	helpData.options[0].choices.push({ name: folder, value: folder });
+    const commandFiles = fs.readdirSync(`./commands/${folder}`).filter(file => file.endsWith('.js'));
+
     for (const file of commandFiles) {
         const command = require(`./commands/${folder}/${file}`);
-        helpData.options[0].choices.push({ name: command.name, value: command.name });
         commands.push(command.data.toJSON());
         if(command.permissions) {
             let perms = [];
@@ -54,7 +53,7 @@ for (const folder of commandFolders) {
 }
 
 //Push help SlashBuilder (in JSON) to array
-commands.push(helpData.toJSON());
+commands.push(helpData);
 
 const rest = new REST({ version: '9' }).setToken(token);
 

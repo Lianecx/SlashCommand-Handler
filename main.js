@@ -16,6 +16,7 @@ const { token } = require('./config.json');
 const Discord = require('discord.js');
 const fs = require('fs');
 const client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILDS] });
+const helpCommand = require('./help');
 
 //Create client.commands Collection
 client.commands = new Discord.Collection();
@@ -33,27 +34,31 @@ for(const folder of commandFolders) {
 
 
 client.once('ready', () => {
-    console.log('Bot logged in as ' + client.user.tag + '\nBot on ' + client.guilds.cache.size + ' server.');
-    client.user.setActivity('over this guild.', {type: "WATCHING"});
-})
+    console.log(`Bot logged in as ${client.user.tag}\nBot on ${client.guilds.cache.size} servers.`);
+    client.user.setActivity('over this guild.', { type: "WATCHING" });
+});
 
 client.on("guildCreate", guild => {
-    console.log("Joined a new guild: " + guild.name + ': ' + guild.memberCount + ' members.\nBot is now on ' + client.guilds.cache.size + ' server!');
-})
+    console.log(`Joined a new guild: ${guild.name}: ${guild.memberCount} members.\nBot is now on ${client.guilds.cache.size} servers!`);
+});
 
 client.on("guildDelete", guild => {
-    console.log("Left a guild: " + guild.name + '\nBot is now on ' + client.guilds.cache.size + ' server!');
-})
+    console.log(`Left a guild: ${guild.name}\nBot is now on ${client.guilds.cache.size} servers!`);
+});
 
 client.on('messageCreate', message => {
 
-})
+});
 
 
 client.on('interactionCreate', async interaction => {
+    console.log(interaction)
+
+    if(interaction.isAutocomplete() && interaction.commandName === 'help') helpCommand.autocomplete(client, interaction);
+
     if(!interaction.isCommand()) return;
 
-    //Add args array for easier use
+    //args array for easier command use
     //args are like args from messageCreate (They include the group and subcommand if one set)
     const args = [];
     if(interaction.options._group) args.push(interaction.options._group);
@@ -66,56 +71,8 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === 'help') {
         await interaction.deferReply();
 
-        const helpEmbed = new Discord.MessageEmbed()
-        .setTitle('Help Menu')
-        .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-        .setColor('DARK_BUT_NOT_BLACK');
-        if(!args[0]) {
-            //You can adjust the fields for the categorys manually to your likings
-            helpEmbed.addField("Main", "Main Commands")
-            .addField("Moderation", "Moderation Commands")
-            //...
-            interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
-
-            //Or use the built-in embed (lame)
-            /*fs.readdir('./commands/', (err, cmds) => {
-                cmds = cmds.filter(cmd => cmd.endsWith('js'));
-                cmds.forEach(cmd => helpEmbed.addField(cmd, cmd + ' commands'));
-                interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
-            });*/
-        } else {
-            let command = client.commands.get(args[0]) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(args[0]));
-            if (!command) {
-                fs.readdir(`./commands/${args[0]}`, (err, commands) => {
-                    if(err) {
-                        console.log(interaction.member.user.tag + ' executed non-existent help command/category ' + args[0] + ' in ' + interaction.guild.id);
-                        interaction.editReply(':warning: That command/category [**' + args[0] + '**] doesnt exist.');
-                        return;
-                    }
-
-                    commands.forEach(commandFile => {
-                        commandFile = commandFile.split('.').shift();
-                        command = client.commands.get(commandFile.split('.').shift());
-                        helpEmbed.addField(command.name.toUpperCase(), command.description);
-                    });
-                    interaction.editReply({ embeds: [helpEmbed] });
-                });
-            } else {
-                //client.commands.forEach(command => helpEmbed.addField(command.name.toUpperCase(), command.description, true));
-
-                const helpEmbed = new Discord.MessageEmbed()
-                    .setTitle('Help Menu')
-                    .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-                    .setColor('DARK_BUT_NOT_BLACK')
-                    .addField(command.name.toUpperCase(), command.description);
-                if(command.usage) helpEmbed.addField('\n**USAGE**', command.usage);
-                if(command.example) helpEmbed.addField('\n**EXAMPLE**', command.example);
-
-                interaction.editReply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
-            }
-        }
+        helpCommand.execute(client, interaction, args);
     } else {
-
         //Other Commands
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
