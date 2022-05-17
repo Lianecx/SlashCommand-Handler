@@ -5,7 +5,7 @@ console.log('Loading...');
 //    "token":"BOT-TOKEN",
 //    "clientId": "BOT-CLIENT-ID",
 //	  "guildId": "GUILD ID",
-//    "roleIds": {
+//    "roles": {
 //        "ROLENAME": ROLEID,
 //        "2ndROLENAME", 2ndROLEID
 //        etc...
@@ -31,19 +31,19 @@ for (const file of commandFiles) {
 client.once('ready', () => {
     console.log('Bot logged in as ' + client.user.tag + '\nBot on ' + client.guilds.cache.size + ' server.');
     client.user.setActivity('over this guild.', {type: "WATCHING"});
-})
+});
 
 client.on("guildCreate", guild => {
     console.log("Joined a new guild: " + guild.name + ': ' + guild.memberCount + ' members.\nBot is now on ' + client.guilds.cache.size + ' server!');
-})
+});
 
 client.on("guildDelete", guild => {
     console.log("Left a guild: " + guild.name + '\nBot is now on ' + client.guilds.cache.size + ' server!');
-})
+});
 
 client.on('messageCreate', message => {
 
-})
+});
 
 
 client.on('interactionCreate', async interaction => {
@@ -61,11 +61,11 @@ client.on('interactionCreate', async interaction => {
     //interaction.reply = interaction.editReply
     interaction.reply = function (content) {
         return interaction.editReply(content);
-    }
+    };
     interaction.channel.send = function (content) {
         if (typeof content !== 'string') interaction.editReply(content);
         else interaction.editReply({ content: content, allowedMentions: { repliedUser: false } });
-    }
+    };
 
     //Help command
     if (interaction.commandName === 'help') {
@@ -111,6 +111,6 @@ client.on('interactionCreate', async interaction => {
 
         command.execute(interaction, args);
     }
-})
+});
 
 client.login(token);
