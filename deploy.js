@@ -3,14 +3,14 @@
 //    "token":"BOT-TOKEN",
 //    "clientId": "BOT-CLIENT-ID",
 //	  "guildId": "GUILD ID",
-//    "roleIds": {
+//    "roles": {
 //        "ROLENAME": ROLEID,
 //        "2ndROLENAME", 2ndROLEID
 //        etc...
 //    },
 //}
 //Must be in same folder as main.js
-const { token, clientId, guildId, roleIds } = require('./config.json');
+const { token, clientId, guildId, roles } = require('./config.json');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { SlashCommandBuilder } = require('@discordjs/builders');
@@ -44,7 +44,7 @@ for (const file of commandFiles) {
 	if(command.permissions) {
         let perms = [];
         for(const perm of command.permissions) {
-            if(roleIds[perm]) perms.push({ id: roleIds[perm], type: 1, permission: true });
+            if(roles[perm]) perms.push({ id: roles[perm], type: 1, permission: true });
             else if(!isNaN(perm)) perms.push({ id: perm, type: 1, permission: true });
         }
         permissions.push({ name: command.name, perms: perms });
@@ -73,20 +73,15 @@ const rest = new REST({ version: '9' }).setToken(token);
         //);
 
 		//Slash Command Permissions
-		const fullPermissions = [];
 		for(const permission of permissions) {
-			fullPermissions.push({
-				id: response.find(cmd => cmd.name === permission.name).id,
-				permissions: permissions.find(cmd => cmd.name === permission.name).perms,
-			});
-		}
-        console.log(fullPermissions)
+            //Upload permission for each command
+            const cmd = permissions.find(cmd => cmd.name === permission.name);
 
-        //Upload permissions to discord
-        await rest.put(
-            Routes.guildApplicationCommandsPermissions(clientId, guildId),
-            { body: fullPermissions },
-        );
+            await rest.put(
+                Routes.applicationCommandPermissions(clientId, guildId, cmd.id),
+                { body: cmd.perms },
+            );
+		}
 
         console.log('Successfully reloaded application (/) commands.');
     } catch (err) {
