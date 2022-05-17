@@ -48,23 +48,9 @@ client.on('messageCreate', message => {
 
 client.on('interactionCreate', async interaction => {
     if(!interaction.isCommand()) return;
-
-    //Add args array for easier use
-    //args are like args from messageCreate (They include the group and subcommand if one set)
-    const args = [];
-    if(interaction.options._group) args.push(interaction.options._group);
-    if(interaction.options._subcommand) args.push(interaction.options._subcommand);
-    interaction.options._hoistedOptions.forEach(option => {
-        if(option.value) args.push(option.value);
-    });
-
     //interaction.reply = interaction.editReply
     interaction.reply = function (content) {
         return interaction.editReply(content);
-    };
-    interaction.channel.send = function (content) {
-        if (typeof content !== 'string') interaction.editReply(content);
-        else interaction.editReply({ content: content, allowedMentions: { repliedUser: false } });
     };
 
     //Help command
@@ -108,8 +94,7 @@ client.on('interactionCreate', async interaction => {
         if (!command) return;
 
         await interaction.deferReply();
-
-        command.execute(interaction, args);
+        command.execute(interaction);
     }
 });
 

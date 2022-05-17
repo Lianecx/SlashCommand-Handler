@@ -12,10 +12,10 @@ module.exports = {
             .setName('ping')
             .setDescription('Ping! Pong!')
             .setDefaultPermission(false),
-    execute(interaction, args) {
+    execute(interaction) {
         //interaction properties equal to message properties except message.mentions and message.attachments dont exist.
         //interaction.reply to answer commands.
         //This to answer without ping => interaction.reply({ content: '', allowedMentions: { repliedUser: false } });
         interaction.reply('Pong!');
     }
-}
+};
