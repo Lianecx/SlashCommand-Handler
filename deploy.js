@@ -75,11 +75,12 @@ const rest = new REST({ version: '9' }).setToken(token);
 		//Slash Command Permissions
 		for(const permission of permissions) {
             //Upload permission for each command
-            const cmd = permissions.find(cmd => cmd.name === permission.name);
+            const cmdId = response.find(cmd => cmd.name === permission.name).id;
+            const cmdPerms = permissions.find(cmd => cmd.name === permission.name).perms;
 
             await rest.put(
-                Routes.applicationCommandPermissions(clientId, guildId, cmd.id),
-                { body: cmd.perms },
+                Routes.applicationCommandPermissions(clientId, guildId, cmdId),
+                { body: cmdPerms },
             );
 		}
 
