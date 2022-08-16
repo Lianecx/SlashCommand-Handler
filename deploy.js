@@ -51,18 +51,11 @@ const commandFiles = fs.readdirSync('./commands/')
 
 const commands = [];
 
-//Add command options to help SlashCommandBuilder
-const helpData = require('./help.js').data.toJSON();
-helpData.options[0].choices = [];
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    helpData.options[0].choices.push({ name: command.name, value: command.name });
-}
 //Push help command to commands array
-commands.push(helpData);
+commands.push(require('./help.js').data.toJSON());
 
-//Push all SlashCommandBuilders (in JSON) to commands array
-for (const file of commandFiles) {
+//Push all other SlashCommandBuilders (in JSON) to commands array
+for(const file of commandFiles) {
     const command = require(`./commands/${file}`);
     commands.push(command?.data.toJSON());
 }

@@ -22,7 +22,7 @@ const client = new Discord.Client({ intents: [Discord.GatewayIntentBits.GuildMes
 client.commands = new Discord.Collection();
 //Read ./commands and filter all nonJs files
 const commandFiles = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
+for(const file of commandFiles) {
     //Require all commandFiles
     const command = require(`./commands/${file}`);
     //Set all commandFiles in ./commands in client.commands collection
@@ -48,20 +48,24 @@ client.on('interactionCreate', async interaction => {
         console.log(`${interaction.user.tag} executed /${interaction.commandName} ${getArgs(interaction)}`);
 
         //Help command
-        if (interaction.commandName === 'help') helpCommand.execute(interaction);
+        if(interaction.commandName === 'help') helpCommand.execute(interaction);
         else {
             //Other Commands
             const command = client.commands.get(interaction.commandName);
-            if (!command) return;
+            if(!command) return;
 
             if(command.defer) await interaction.deferReply();
             command?.execute?.(interaction);
         }
     }
     else if(interaction.isAutocomplete()) {
-        const command = client.commands.get(interaction.commandName);
-        if (!command) return;
-        command?.autocomplete?.(interaction);
+        if(interaction.commandName === 'help') helpCommand.autocomplete(interaction);
+        else {
+            const command = client.commands.get(interaction.commandName);
+            if(!command) return;
+
+            command?.autocomplete?.(interaction);
+        }
     }
 });
 

@@ -17,7 +17,8 @@ module.exports = {
     usage: 'ping',
     example: 'ping',
     description: 'Ping! Pong!',
-    //Will get role ids from config.json.
+    //Will deferReply the interaction
+    defer: true,
     data: new SlashCommandBuilder()
         .setName('ping')
         .setDescription('Ping! Pong!')
