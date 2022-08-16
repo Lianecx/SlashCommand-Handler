@@ -15,7 +15,8 @@ console.log('Loading...');
 const { token } = require('./config.json');
 const Discord = require('discord.js');
 const fs = require('fs');
-const client = new Discord.Client({ intents: [Discord.Intents.FLAGS.GUILD_MESSAGES, Discord.Intents.FLAGS.GUILDS] });
+const helpCommand = require('./help');
+const client = new Discord.Client({ intents: [Discord.GatewayIntentBits.GuildMessages, Discord.GatewayIntentBits.Guilds] });
 
 //Create client.commands Collection
 client.commands = new Discord.Collection();
@@ -29,72 +30,36 @@ for (const file of commandFiles) {
 }
 
 client.once('ready', () => {
-    console.log('Bot logged in as ' + client.user.tag + '\nBot on ' + client.guilds.cache.size + ' server.');
-    client.user.setActivity('over this guild.', {type: "WATCHING"});
+    console.log(`Bot logged in as ${client.user.tag}\nBot on ${client.guilds.cache.size} server.`);
+    client.user.setActivity({ name: 'to /help', type: Discord.ActivityType.Listening });
 });
 
-client.on("guildCreate", guild => {
-    console.log("Joined a new guild: " + guild.name + ': ' + guild.memberCount + ' members.\nBot is now on ' + client.guilds.cache.size + ' server!');
+client.on('guildCreate', guild => {
+    console.log(`Joined a new guild: ${guild.name}: ${guild.memberCount} members.\nBot is now on ${client.guilds.cache.size} server!`);
 });
 
-client.on("guildDelete", guild => {
-    console.log("Left a guild: " + guild.name + '\nBot is now on ' + client.guilds.cache.size + ' server!');
-});
-
-client.on('messageCreate', message => {
-
+client.on('guildDelete', guild => {
+    console.log(`Left a guild: ${guild.name}\nBot is now on ${client.guilds.cache.size} server!`);
 });
 
 
 client.on('interactionCreate', async interaction => {
-    if(!interaction.isCommand()) return;
-    //interaction.reply = interaction.editReply
-    interaction.reply = function (content) {
-        return interaction.editReply(content);
-    };
+    if(interaction.isCommand()) {
+        //Help command
+        if (interaction.commandName === 'help') helpCommand.execute(interaction);
+        else {
+            //Other Commands
+            const command = client.commands.get(interaction.commandName);
+            if (!command) return;
 
-    //Help command
-    if (interaction.commandName === 'help') {
-        await interaction.deferReply();
-
-        if(!args[0]) {
-            console.log(interaction.user.tag + ' executed /help in ' + interaction.guild.name);
-
-            const helpEmbed = new Discord.MessageEmbed()
-                .setTitle('Help Menu')
-                .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-                .setColor('DARK_BUT_NOT_BLACK');
-
-                client.commands.forEach(command => helpEmbed.addField(command.name.toUpperCase(), command.description, true));
-
-            interaction.reply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
-        } else {
-            console.log(`${interaction.user.tag} executed /help ${args[0]} in ${interaction.guild.name}`);
-
-            const helpCommand = client.commands.get(args[0]);
-            if(!helpCommand) {
-                interaction.reply(`:warning: That command [**${args[0]}**] doesnt exist.`);
-                return;
-            }
-
-            const helpEmbed = new Discord.MessageEmbed()
-                .setTitle('Help Menu')
-                .setAuthor(client.user.username, client.user.displayAvatarURL({ format: 'png', dynamic: false }))
-                .setColor('DARK_BUT_NOT_BLACK')
-                .addField(helpCommand.name.toUpperCase(), helpCommand.description);
-            if(helpCommand.usage) helpEmbed.addField('\n**USAGE**', helpCommand.usage);
-            if(helpCommand.example) helpEmbed.addField('\n**EXAMPLE**', helpCommand.example);
-
-            interaction.reply({ embeds: [helpEmbed], allowedMentions: { repliedUser: false } });
+            if(command.defer) await interaction.deferReply();
+            command?.execute?.(interaction);
         }
-    } else {
-
-        //Other Commands
+    }
+    else if(interaction.isAutocomplete()) {
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
-
-        await interaction.deferReply();
-        command.execute(interaction);
+        command?.autocomplete?.(interaction);
     }
 });
 
