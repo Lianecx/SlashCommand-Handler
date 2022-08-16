@@ -10,82 +10,102 @@
 //    },
 //}
 //Must be in same folder as main.js
-const { token, clientId, guildId, roles } = require('./config.json');
+const { token, clientId, guildId } = require('./config.json');
 const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const { Routes } = require('discord-api-types/v10');
 const fs = require('fs');
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
 
-const commandFiles = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
+let deployGuild = false;
+let deployGlobal = false;
+let deleteGuild = false;
+let deleteGlobal = false;
 
-//Help SlashCommandBuilder
-const helpData = new SlashCommandBuilder()
-    .setName('help')
-    .setDescription('Detailed Description of every command.')
-    .addStringOption(option =>
-        option.setName('command')
-        .setDescription('Set the command of which you want to get information.')
-        .setRequired(false)
-    );
+const argv = yargs(hideBin(process.argv))
+    .command(['deploy [location]', 'dep'], 'Deploys the slash commands in the specified location.')
+    .command(['delete', 'del'], 'Deletes the slash commands from the specified location.')
+    .option('location', {
+        description: 'The location to deploy the commands to. Valid locations are: guild, global, all. If no location is specified, the commands will be deployed globally.',
+        type: 'string',
+        choices: ['guild', 'global', 'all'],
+        default: 'global',
+        global: true,
+        alias: ['loc', 'l'],
+    })
+    .strict()
+    .help()
+    .argv;
 
-//Still Help SlashCommandBuilder
+if(argv._.includes('deploy') || argv._.includes('dep')) {
+    deployGuild = argv.location.includes('guild') || argv.location.includes('all');
+    deployGlobal = argv.location.includes('global') || argv.location.includes('all');
+}
+if(argv._.includes('delete') || argv._.includes('del')) {
+    deleteGuild = argv.location.includes('guild') || argv.location.includes('all');
+    deleteGlobal = argv.location.includes('global') || argv.location.includes('all');
+}
+
+const commandFiles = fs.readdirSync('./commands/')
+    .filter(file => file.endsWith('.js'));
+
+const commands = [];
+
+//Add command options to help SlashCommandBuilder
+const helpData = require('./help.js').data.toJSON();
 helpData.options[0].choices = [];
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     helpData.options[0].choices.push({ name: command.name, value: command.name });
 }
+//Push help command to commands array
+commands.push(helpData);
 
-//Push all SlashBuilders (in JSON) and permissions from all command files to array
-const commands = [];
-const permissions = [];
+//Push all SlashCommandBuilders (in JSON) to commands array
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
-    commands.push(command.data.toJSON());
-	if(command.permissions) {
-        let perms = [];
-        for(const perm of command.permissions) {
-            if(roles[perm]) perms.push({ id: roles[perm], type: 1, permission: true });
-            else if(!isNaN(perm)) perms.push({ id: perm, type: 1, permission: true });
-        }
-        permissions.push({ name: command.name, perms: perms });
-    }
+    commands.push(command?.data.toJSON());
 }
 
-//Push help SlashBuilder (in JSON) to array
-commands.push(helpData.toJSON());
-
-const rest = new REST({ version: '9' }).setToken(token);
+const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
     try {
-        console.log('Started refreshing application (/) commands.');
-
-        //Upload all SlashCommands to discord (only for one guild)
-        const response = await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
-            { body: commands },
-        );
-
-        //For GLOBAL Slash commands:
-        //await rest.put(
-        //    Routes.applicationCommands(clientId),
-        //    { body: commands },
-        //);
-
-		//Slash Command Permissions
-		for(const permission of permissions) {
-            //Upload permission for each command
-            const cmdId = response.find(cmd => cmd.name === permission.name).id;
-            const cmdPerms = permissions.find(cmd => cmd.name === permission.name).perms;
-
+        if(deployGuild) {
+            console.log('Started deploying application guild (/) commands.');
             await rest.put(
-                Routes.applicationCommandPermissions(clientId, guildId, cmdId),
-                { body: cmdPerms },
+                Routes.applicationGuildCommands(clientId, guildId),
+                { body: commands },
             );
-		}
+        }
+        if(deployGlobal) {
+            console.log('Started deploying application global (/) commands.');
+            await rest.put(
+                Routes.applicationCommands(clientId),
+                { body: commands },
+            );
+        }
 
-        console.log('Successfully reloaded application (/) commands.');
-    } catch (err) {
-        console.log('Error while reloading application (/) commands.', err);
+        if(deleteGuild) {
+            console.log('Started deleting application guild (/) commands.');
+            const resp = await rest.get(Routes.applicationGuildCommands(clientId, guildId));
+
+            for(const command of resp) {
+                await rest.delete(Routes.applicationGuildCommand(clientId, guildId, command.id));
+            }
+        }
+        if(deleteGlobal) {
+            console.log('Started deleting application global (/) commands.');
+            const resp = await rest.get(Routes.applicationCommands(clientId));
+
+            for(const command of resp) {
+                await rest.delete(Routes.applicationCommand(clientId, command.id));
+            }
+        }
+
+        console.log('Successfully refreshed application (/) commands.');
+    }
+    catch(err) {
+        console.log('Could not refresh application (/) commands.', err);
     }
 })();
