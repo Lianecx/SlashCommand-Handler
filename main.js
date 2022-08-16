@@ -45,6 +45,8 @@ client.on('guildDelete', guild => {
 
 client.on('interactionCreate', async interaction => {
     if(interaction.isCommand()) {
+        console.log(`${interaction.user.tag} executed /${interaction.commandName} ${getArgs(interaction)}`);
+
         //Help command
         if (interaction.commandName === 'help') helpCommand.execute(interaction);
         else {
@@ -62,5 +64,22 @@ client.on('interactionCreate', async interaction => {
         command?.autocomplete?.(interaction);
     }
 });
+
+//Gets a string of passed arguments from a command interaction
+function getArgs(interaction) {
+    const args = [];
+
+    function addArgs(option) {
+        if(option.type === Discord.ApplicationCommandOptionType.SubcommandGroup || option.type === Discord.ApplicationCommandOptionType.Subcommand) {
+            args.push(option.name);
+            option.options.forEach(opt => addArgs(opt));
+        }
+        else args.push(option.channel?.name ?? option.user?.tag ?? option.role?.name ?? option.attachment?.name ?? option.value);
+    }
+
+    interaction.options.data.forEach(option => addArgs(option));
+
+    return args.join(' ');
+}
 
 client.login(token);

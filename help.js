@@ -9,13 +9,9 @@ function execute(interaction) {
         .setColor(Discord.Colors.DarkButNotBlack);
 
     if(!commandName) {
-        console.log(`${interaction.user.tag} executed /help in ${interaction.guild.name}`);
-
         //Add field for every command
         interaction.client.commands.forEach(command => helpEmbed.addFields({ name: command.name.toUpperCase(), value: command.description, inline: true }));
     } else {
-        console.log(`${interaction.user.tag} executed /help ${commandName} in ${interaction.guild.name}`);
-
         const command = interaction.client.commands.get(commandName);
         if(!command) {
             interaction.reply(`:warning: The command: **${commandName}** doesnt exist.`);
