@@ -1,6 +1,7 @@
-# Complete Bot Handler
+# Complete Bot Handler Template
 
 - Slash Command Handler
-- Fully functional Help command
+- Discord.js v14
+- Fully functional and scalable Help command
 - Descriptions
-- Easy to use
+- Powerful deploy cli script
