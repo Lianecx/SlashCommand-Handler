@@ -1,15 +1,16 @@
-const { SlashCommandBuilder } = require('@discordjs/builders');
+const Discord = require('discord.js');
+
+function execute(interaction) {
+
+}
 
 module.exports = {
     name: '',
     usage: '',
     example: '',
     description: '',
-    permissions: [],
-    data: new SlashCommandBuilder()
-            .setName('')
-            .setDescription(''),
-    execute(message, args) {
-
-	}
-}
+    data: new Discord.SlashCommandBuilder()
+        .setName(this.name)
+        .setDescription(this.description)
+    execute,
+};
