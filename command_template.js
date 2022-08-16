@@ -10,7 +10,7 @@ module.exports = {
     example: '',
     description: '',
     data: new Discord.SlashCommandBuilder()
-        .setName(this.name)
-        .setDescription(this.description)
+        .setName('')
+        .setDescription(''),
     execute,
 };
