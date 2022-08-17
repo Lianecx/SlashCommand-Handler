@@ -46,18 +46,21 @@ if(argv._.includes('delete') || argv._.includes('del')) {
     deleteGlobal = argv.location.includes('global') || argv.location.includes('all');
 }
 
-const commandFiles = fs.readdirSync('./commands/')
-    .filter(file => file.endsWith('.js'));
-
 const commands = [];
 
 //Push help command to commands array
 commands.push(require('./help.js').data.toJSON());
 
 //Push all other SlashCommandBuilders (in JSON) to commands array
-for(const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commands.push(command?.data.toJSON());
+const commandFolders = fs.readdirSync('./commands/');
+for(const folder of commandFolders) {
+    const commandFiles = fs.readdirSync(`./commands/${folder}`)
+        .filter(file => file.endsWith('.js'));
+
+    for(const file of commandFiles) {
+        const command = require(`./commands/${folder}/${file}`);
+        commands.push(command?.data.toJSON());
+    }
 }
 
 const rest = new REST({ version: '10' }).setToken(token);

@@ -20,13 +20,19 @@ const client = new Discord.Client({ intents: [Discord.GatewayIntentBits.GuildMes
 
 //Create client.commands Collection
 client.commands = new Discord.Collection();
-//Read ./commands and filter all nonJs files
-const commandFiles = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
-for(const file of commandFiles) {
-    //Require all commandFiles
-    const command = require(`./commands/${file}`);
-    //Set all commandFiles in ./commands in client.commands collection
-    client.commands.set(command.name, command);
+
+//Read all categories in ./commands
+const commandFolders = fs.readdirSync('./commands/');
+for(const folder of commandFolders) {
+    const commandFiles = fs.readdirSync(`./commands/${folder}`)
+        .filter(file => file.endsWith('.js'));
+
+    for(const file of commandFiles) {
+        //Require all commandFiles
+        const command = require(`./commands/${folder}/${file}`);
+        //Set all commandFiles in ./commands in client.commands collection
+        client.commands.set(command.name, command);
+    }
 }
 
 client.once('ready', () => {
