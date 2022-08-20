@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 
 function execute(interaction) {
+    //editReply because defer:true
     interaction.editReply('Pong!');
 }
 
