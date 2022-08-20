@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 
 function execute(interaction) {
     interaction.reply('Pong!');
@@ -12,7 +12,7 @@ function autocomplete(interaction) {
     }]);
 }
 
-module.exports = {
+export default {
     name: 'ping',
     usage: 'ping',
     example: 'ping',

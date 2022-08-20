@@ -12,10 +12,10 @@ console.log('Loading...');
 //    },
 //}
 //Must be in same folder as main.js
-const { token } = require('./config.json');
-const Discord = require('discord.js');
-const fs = require('fs');
-const helpCommand = require('./help');
+import data from './config.json' assert { type: 'json' };
+import Discord from 'discord.js';
+import fs from 'fs';
+import helpCommand from './help.js';
 const client = new Discord.Client({ intents: [Discord.GatewayIntentBits.GuildMessages, Discord.GatewayIntentBits.Guilds] });
 
 //Create client.commands Collection
@@ -24,7 +24,7 @@ client.commands = new Discord.Collection();
 const commandFiles = fs.readdirSync('./commands/').filter(file => file.endsWith('.js'));
 for(const file of commandFiles) {
     //Require all commandFiles
-    const command = require(`./commands/${file}`);
+    const { default: command } = await import(`./commands/${file}`);
     //Set all commandFiles in ./commands in client.commands collection
     client.commands.set(command.name, command);
 }
@@ -86,4 +86,4 @@ function getArgs(interaction) {
     return args.join(' ');
 }
 
-client.login(token);
+client.login(data.token);

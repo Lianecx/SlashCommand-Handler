@@ -10,12 +10,13 @@
 //    },
 //}
 //Must be in same folder as main.js
-const { token, clientId, guildId } = require('./config.json');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v10');
-const fs = require('fs');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
+import data from './config.json' assert { type: 'json' };
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v10';
+import fs from 'fs';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+import helpCommand from './help.js';
 
 let deployGuild = false;
 let deployGlobal = false;
@@ -52,53 +53,51 @@ const commandFiles = fs.readdirSync('./commands/')
 const commands = [];
 
 //Push help command to commands array
-commands.push(require('./help.js').data.toJSON());
+commands.push(helpCommand.data.toJSON());
 
 //Push all other SlashCommandBuilders (in JSON) to commands array
 for(const file of commandFiles) {
-    const command = require(`./commands/${file}`);
+    const { default: command } = await import(`./commands/${file}`);
     commands.push(command?.data.toJSON());
 }
 
-const rest = new REST({ version: '10' }).setToken(token);
+const rest = new REST({ version: '10' }).setToken(data.token);
 
-(async () => {
-    try {
-        if(deployGuild) {
-            console.log('Started deploying application guild (/) commands.');
-            await rest.put(
-                Routes.applicationGuildCommands(clientId, guildId),
-                { body: commands },
-            );
-        }
-        if(deployGlobal) {
-            console.log('Started deploying application global (/) commands.');
-            await rest.put(
-                Routes.applicationCommands(clientId),
-                { body: commands },
-            );
-        }
-
-        if(deleteGuild) {
-            console.log('Started deleting application guild (/) commands.');
-            const resp = await rest.get(Routes.applicationGuildCommands(clientId, guildId));
-
-            for(const command of resp) {
-                await rest.delete(Routes.applicationGuildCommand(clientId, guildId, command.id));
-            }
-        }
-        if(deleteGlobal) {
-            console.log('Started deleting application global (/) commands.');
-            const resp = await rest.get(Routes.applicationCommands(clientId));
-
-            for(const command of resp) {
-                await rest.delete(Routes.applicationCommand(clientId, command.id));
-            }
-        }
-
-        console.log('Successfully refreshed application (/) commands.');
+try {
+    if(deployGuild) {
+        console.log('Started deploying application guild (/) commands.');
+        await rest.put(
+            Routes.applicationGuildCommands(data.clientId, data.guildId),
+            { body: commands },
+        );
     }
-    catch(err) {
-        console.log('Could not refresh application (/) commands.', err);
+    if(deployGlobal) {
+        console.log('Started deploying application global (/) commands.');
+        await rest.put(
+            Routes.applicationCommands(data.clientId),
+            { body: commands },
+        );
     }
-})();
+
+    if(deleteGuild) {
+        console.log('Started deleting application guild (/) commands.');
+        const resp = await rest.get(Routes.applicationGuildCommands(data.clientId, data.guildId));
+
+        for(const command of resp) {
+            await rest.delete(Routes.applicationGuildCommand(data.clientId, data.guildId, command.id));
+        }
+    }
+    if(deleteGlobal) {
+        console.log('Started deleting application global (/) commands.');
+        const resp = await rest.get(Routes.applicationCommands(data.clientId));
+
+        for(const command of resp) {
+            await rest.delete(Routes.applicationCommand(data.clientId, command.id));
+        }
+    }
+
+    console.log('Successfully refreshed application (/) commands.');
+}
+catch(err) {
+    console.log('Could not refresh application (/) commands.', err);
+}

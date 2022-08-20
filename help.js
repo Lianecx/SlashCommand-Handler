@@ -1,4 +1,4 @@
-const Discord = require('discord.js');
+import Discord from 'discord.js';
 
 function autocomplete(interaction) {
     const focused = interaction.options.getFocused().toLowerCase();
@@ -40,7 +40,7 @@ function execute(interaction) {
     interaction.reply({ embeds: [helpEmbed] });
 }
 
-module.exports = {
+export default {
     name: 'help',
     usage: 'help [command]',
     example: 'help ping',
