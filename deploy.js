@@ -25,7 +25,7 @@ let deleteGlobal = false;
 
 const argv = yargs(hideBin(process.argv))
     .command(['deploy [location]', 'dep'], 'Deploys the slash commands in the specified location.')
-    .command(['delete', 'del'], 'Deletes the slash commands from the specified location.')
+    .command(['delete [location]', 'del'], 'Deletes the slash commands from the specified location.')
     .option('location', {
         description: 'The location to deploy the commands to. Valid locations are: guild, global, all. If no location is specified, the commands will be deployed globally.',
         type: 'string',
@@ -35,6 +35,7 @@ const argv = yargs(hideBin(process.argv))
         alias: ['loc', 'l'],
     })
     .strict()
+    .demandCommand(1)
     .help()
     .argv;
 
