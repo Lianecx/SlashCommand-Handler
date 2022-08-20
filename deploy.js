@@ -17,6 +17,7 @@ import fs from 'fs';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import helpCommand from './help.js';
+const rest = new REST({ version: '10' }).setToken(data.token);
 
 let deployGuild = false;
 let deployGlobal = false;
@@ -25,7 +26,7 @@ let deleteGlobal = false;
 
 const argv = yargs(hideBin(process.argv))
     .command(['deploy [location]', 'dep'], 'Deploys the slash commands in the specified location.')
-    .command(['delete', 'del'], 'Deletes the slash commands from the specified location.')
+    .command(['delete [location]', 'del'], 'Deletes the slash commands from the specified location.')
     .option('location', {
         description: 'The location to deploy the commands to. Valid locations are: guild, global, all. If no location is specified, the commands will be deployed globally.',
         type: 'string',
@@ -34,6 +35,7 @@ const argv = yargs(hideBin(process.argv))
         global: true,
         alias: ['loc', 'l'],
     })
+    .demandCommand(1)
     .strict()
     .help()
     .argv;
@@ -58,10 +60,9 @@ commands.push(helpCommand.data.toJSON());
 //Push all other SlashCommandBuilders (in JSON) to commands array
 for(const file of commandFiles) {
     const { default: command } = await import(`./commands/${file}`);
+    console.log(`Loaded ${command.name}`);
     commands.push(command?.data.toJSON());
 }
-
-const rest = new REST({ version: '10' }).setToken(data.token);
 
 try {
     if(deployGuild) {
