@@ -16,6 +16,7 @@ const { Routes } = require('discord-api-types/v10');
 const fs = require('fs');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
+const rest = new REST({ version: '10' }).setToken(token);
 
 let deployGuild = false;
 let deployGlobal = false;
@@ -57,10 +58,9 @@ commands.push(require('./help.js').data.toJSON());
 //Push all other SlashCommandBuilders (in JSON) to commands array
 for(const file of commandFiles) {
     const command = require(`./commands/${file}`);
+    console.log(`Loaded ${command.name}`);
     commands.push(command?.data.toJSON());
 }
-
-const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
     try {
