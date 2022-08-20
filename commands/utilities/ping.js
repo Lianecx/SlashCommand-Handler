@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 function execute(interaction) {
-    interaction.reply('Pong!');
+    //editReply because defer:true
+    interaction.editReply('Pong!');
 }
 
 //If exported, will be called for autocompletion of options

@@ -16,6 +16,7 @@ const { Routes } = require('discord-api-types/v10');
 const fs = require('fs');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
+const rest = new REST({ version: '10' }).setToken(token);
 
 let deployGuild = false;
 let deployGlobal = false;
@@ -24,7 +25,7 @@ let deleteGlobal = false;
 
 const argv = yargs(hideBin(process.argv))
     .command(['deploy [location]', 'dep'], 'Deploys the slash commands in the specified location.')
-    .command(['delete', 'del'], 'Deletes the slash commands from the specified location.')
+    .command(['delete [location]', 'del'], 'Deletes the slash commands from the specified location.')
     .option('location', {
         description: 'The location to deploy the commands to. Valid locations are: guild, global, all. If no location is specified, the commands will be deployed globally.',
         type: 'string',
@@ -34,6 +35,7 @@ const argv = yargs(hideBin(process.argv))
         alias: ['loc', 'l'],
     })
     .strict()
+    .demandCommand(1)
     .help()
     .argv;
 
@@ -59,11 +61,10 @@ for(const folder of commandFolders) {
 
     for(const file of commandFiles) {
         const command = require(`./commands/${folder}/${file}`);
+        console.log(`Loaded ${command.name}`);
         commands.push(command?.data.toJSON());
     }
 }
-
-const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
     try {
